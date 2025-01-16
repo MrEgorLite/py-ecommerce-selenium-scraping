@@ -2,13 +2,11 @@ import csv
 from dataclasses import dataclass
 from time import sleep
 from urllib.parse import urljoin
-
-import requests
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 
 BASE_URL = "https://webscraper.io/"
 HOME_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/")
@@ -21,6 +19,33 @@ class Product:
     price: float
     rating: int
     num_of_reviews: int
+
+
+def get_product(item: WebElement) -> Product:
+    return Product(
+        title=item.find_element(By.CLASS_NAME, "title").get_attribute("title"),
+        description=item.find_element(
+            By.CLASS_NAME,
+            "description"
+        ).text,
+        price=float(
+            item.find_element(
+                By.CLASS_NAME,
+                "price")
+            .text.replace("$", "")
+        ),
+        rating=sum(
+            1 for star in item.find_elements(
+                By.CLASS_NAME,
+                "ws-icon-star"
+            )
+        ),
+        num_of_reviews=int(
+            item.find_element(
+                By.CLASS_NAME,
+                "review-count"
+            ).text.split()[0])
+    )
 
 
 def get_products(
@@ -47,34 +72,7 @@ def get_products(
         button.click()
         sleep(2)
     items = driver.find_elements(By.CLASS_NAME, "card")
-    products = []
-    for item in items:
-        products.append(
-            Product(
-                title=item.find_element(By.CLASS_NAME, "title").get_attribute("title"),
-                description=item.find_element(
-                    By.CLASS_NAME,
-                    "description"
-                ).text,
-                price=float(
-                    item.find_element(
-                        By.CLASS_NAME,
-                        "price")
-                    .text.replace("$", "")
-                ),
-                rating=sum(
-                    1 for star in item.find_elements(
-                        By.CLASS_NAME,
-                        "ws-icon-star"
-                    )
-                ),
-                num_of_reviews=int(
-                    item.find_element(
-                        By.CLASS_NAME,
-                        "review-count"
-                    ).text.split()[0])
-            )
-        )
+    products = [get_product(item) for item in items]
     return products
 
 
