@@ -49,18 +49,9 @@ def get_products(
     items = driver.find_elements(By.CLASS_NAME, "card")
     products = []
     for item in items:
-        request = requests.get(
-            urljoin(
-                url,
-                item.find_element(By.CLASS_NAME, "title")
-                .get_attribute("href")
-            )
-        )
-        soup = BeautifulSoup(request.content, "html.parser")
-        title = soup.find("h4", class_="title").text
         products.append(
             Product(
-                title=title,
+                title=item.find_element(By.CLASS_NAME, "title").get_attribute("title"),
                 description=item.find_element(
                     By.CLASS_NAME,
                     "description"
@@ -115,15 +106,10 @@ def write_to_file(products: list[Product], output_file: str) -> None:
 def get_all_products() -> None:
     with webdriver.Chrome() as driver:
         home = get_products(HOME_URL, "", driver)
-        # sleep(3)
         computers = get_products(HOME_URL, "computers", driver)
-        # sleep(3)
         phones = get_products(HOME_URL, "phones", driver)
-        # sleep(3)
         laptops = get_products(HOME_URL, "computers/laptops", driver)
-        # sleep(3)
         tablets = get_products(HOME_URL, "computers/tablets", driver)
-        # sleep(3)
         touch = get_products(HOME_URL, "phones/touch", driver)
     write_to_file(home, "home.csv")
     write_to_file(computers, "computers.csv")
